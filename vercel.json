@@ -4,7 +4,10 @@
     {
       "src": "app/main.py",
       "use": "@vercel/python",
-      "config": { "maxLambdaSize": "50mb" }
+      "config": {
+        "maxLambdaSize": "50mb",
+        "runtime": "python3.11"
+      }
     }
   ],
   "routes": [
@@ -12,5 +15,8 @@
       "src": "/(.*)",
       "dest": "app/main.py"
     }
-  ]
+  ],
+  "env": {
+    "AUTH_API_URL": "https://api-senhas.vercel.app"
+  }
 }

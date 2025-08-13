@@ -1,3 +1,5 @@
+# app/models/consorcio.py
+
 from sqlalchemy import Column, Integer, Text, Date
 from app.database import Base
 
@@ -10,3 +12,6 @@ class Consorcio(Base):
     tipo = Column(Text, nullable=False)
     valor = Column(Text, nullable=False)
     dia_pg = Column(Text, nullable=False)
+
+    # identifica o usuário dono deste registro
+    dono = Column(Text, nullable=False, index=True)

@@ -1,3 +1,5 @@
+# app/schemas/tarefas.py
+
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
@@ -17,6 +19,7 @@ class TarefasUpdate(BaseModel):
 
 class Tarefas(TarefasBase):
     id: int
+    dono: str
 
     class Config:
         from_attributes = True

@@ -1,3 +1,5 @@
+# app/schemas/consorcio.py
+
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
@@ -21,6 +23,7 @@ class ConsorcioUpdate(BaseModel):
 
 class Consorcio(ConsorcioBase):
     id: int
+    owner_id: int
 
     class Config:
         from_attributes = True

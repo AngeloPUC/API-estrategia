@@ -1,3 +1,5 @@
+# app/schemas/equipe.py
+
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
@@ -17,6 +19,7 @@ class EquipeUpdate(BaseModel):
 
 class Equipe(EquipeBase):
     id: int
+    owner_id: int
 
     class Config:
         from_attributes = True

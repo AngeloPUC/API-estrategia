@@ -1,3 +1,5 @@
+# app/models/tdv.py
+
 from sqlalchemy import Column, Integer, Text, Date
 from app.database import Base
 
@@ -10,3 +12,6 @@ class Tdv(Base):
     dia_venc = Column(Text, nullable=False)
     pmt_pontos = Column(Text, nullable=False)
     dt_venda = Column(Date, nullable=True)
+
+    # identifica o usuário dono deste registro
+    dono = Column(Text, nullable=False, index=True)

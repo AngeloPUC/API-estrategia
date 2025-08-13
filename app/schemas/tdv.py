@@ -1,3 +1,5 @@
+# app/schemas/tdv.py
+
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
@@ -21,6 +23,7 @@ class TdvUpdate(BaseModel):
 
 class Tdv(TdvBase):
     id: int
+    dono: str
 
     class Config:
         from_attributes = True

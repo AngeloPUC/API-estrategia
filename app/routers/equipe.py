@@ -1,44 +1,56 @@
+# app/routers/equipe.py
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import date
 
 from app import crud, schemas
-from app.database import SessionLocal
+from app.database import get_db
+from app.auth.security import get_current_user
 
 router = APIRouter(
     prefix="/equipe",
-    tags=["equipe"]
+    tags=["Equipe"],
 )
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.post("/", response_model=schemas.equipe.Equipe)
 def create_equipe(
     equipe: schemas.equipe.EquipeCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
-    return crud.equipe.create_equipe(db, equipe)
+    return crud.equipe.create_equipe(
+        db,
+        equipe,
+        owner_id=current_user["id"]
+    )
 
 @router.get("/", response_model=List[schemas.equipe.Equipe])
 def read_equipes(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
-    return crud.equipe.get_equipes(db, skip, limit)
+    return crud.equipe.get_equipes(
+        db,
+        owner_id=current_user["id"],
+        skip=skip,
+        limit=limit
+    )
 
 @router.get("/{equipe_id}", response_model=schemas.equipe.Equipe)
 def read_equipe(
     equipe_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
-    db_equipe = crud.equipe.get_equipe(db, equipe_id)
+    db_equipe = crud.equipe.get_equipe(
+        db,
+        equipe_id,
+        owner_id=current_user["id"]
+    )
     if not db_equipe:
         raise HTTPException(status_code=404, detail="Equipe não encontrada")
     return db_equipe
@@ -47,9 +59,15 @@ def read_equipe(
 def update_equipe(
     equipe_id: int,
     equipe: schemas.equipe.EquipeUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
-    updated = crud.equipe.update_equipe(db, equipe_id, equipe)
+    updated = crud.equipe.update_equipe(
+        db,
+        equipe_id,
+        equipe,
+        owner_id=current_user["id"]
+    )
     if not updated:
         raise HTTPException(status_code=404, detail="Equipe não encontrada")
     return updated
@@ -57,9 +75,14 @@ def update_equipe(
 @router.delete("/{equipe_id}", response_model=schemas.equipe.Equipe)
 def delete_equipe(
     equipe_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
-    deleted = crud.equipe.delete_equipe(db, equipe_id)
+    deleted = crud.equipe.delete_equipe(
+        db,
+        equipe_id,
+        owner_id=current_user["id"]
+    )
     if not deleted:
         raise HTTPException(status_code=404, detail="Equipe não encontrada")
     return deleted
@@ -68,6 +91,12 @@ def delete_equipe(
 def search_equipes(
     funcao: str = Query(..., description="Função na equipe"),
     dt_niver: date = Query(..., description="Data de aniversário"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
-    return crud.equipe.get_equipes_by_funcao_and_dt_niver(db, funcao, dt_niver)
+    return crud.equipe.get_equipes_by_funcao_and_dt_niver(
+        db,
+        owner_id=current_user["id"],
+        funcao=funcao,
+        dt_niver=dt_niver
+    )

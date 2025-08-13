@@ -1,23 +1,32 @@
-import os
-from dotenv import load_dotenv
+# app/database.py
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from app.config import settings
 
-# Carrega .env
-load_dotenv()
-
-# Lê a string de conexão
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("Defina DATABASE_URL no .env")
-
-# Cria o engine com SSL obrigatório
+# Cria o engine do SQLAlchemy apontando para o seu DATABASE_URL
 engine = create_engine(
-    DATABASE_URL,
-    connect_args={"sslmode": "require"},  # Neon exige SSL
+    settings.DATABASE_URL,
+    connect_args={"sslmode": "require"},
     echo=False,
     future=True
 )
 
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+# Configura a Session factory
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False,
+    future=True
+)
+
+# Classe base para os modelos ORM
 Base = declarative_base()
+
+# Dependência do FastAPI para injetar a sessão no endpoint
+def get_db() -> Session:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
