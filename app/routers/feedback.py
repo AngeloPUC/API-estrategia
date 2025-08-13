@@ -1,5 +1,3 @@
-# app/routers/feedback.py
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
@@ -19,10 +17,11 @@ def create_feedback(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.feedback.create_feedback(
         db,
         feedback,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
 
 @router.get("/", response_model=List[schemas.feedback.Feedback])
@@ -32,9 +31,10 @@ def read_feedbacks(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.feedback.get_feedbacks(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         skip=skip,
         limit=limit
     )
@@ -45,10 +45,11 @@ def read_feedback(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     db_feedback = crud.feedback.get_feedback(
         db,
         feedback_id,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not db_feedback:
         raise HTTPException(status_code=404, detail="Feedback não encontrado")
@@ -61,11 +62,12 @@ def update_feedback(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     updated = crud.feedback.update_feedback(
         db,
         feedback_id,
         feedback,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Feedback não encontrado")
@@ -77,10 +79,11 @@ def delete_feedback(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     deleted = crud.feedback.delete_feedback(
         db,
         feedback_id,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="Feedback não encontrado")
@@ -92,8 +95,9 @@ def search_feedbacks(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.feedback.get_feedbacks_by_quem_id(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         quem_id=quem_id
     )

@@ -2,20 +2,19 @@
 
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import date
 
 from app.models.consorcio import Consorcio as ConsorcioModel
 from app.schemas.consorcio import ConsorcioCreate, ConsorcioUpdate
 
 def get_consorcios(
     db: Session,
-    owner_id: int,
+    owner_email: str,
     skip: int = 0,
     limit: int = 100
 ) -> List[ConsorcioModel]:
     return (
         db.query(ConsorcioModel)
-          .filter(ConsorcioModel.owner_id == owner_id)
+          .filter(ConsorcioModel.owner_email == owner_email)
           .offset(skip)
           .limit(limit)
           .all()
@@ -24,13 +23,13 @@ def get_consorcios(
 def get_consorcio(
     db: Session,
     consorcio_id: int,
-    owner_id: int
+    owner_email: str
 ) -> ConsorcioModel | None:
     return (
         db.query(ConsorcioModel)
           .filter(
               ConsorcioModel.id == consorcio_id,
-              ConsorcioModel.owner_id == owner_id
+              ConsorcioModel.owner_email == owner_email
           )
           .first()
     )
@@ -38,9 +37,9 @@ def get_consorcio(
 def create_consorcio(
     db: Session,
     consorcio: ConsorcioCreate,
-    owner_id: int
+    owner_email: str
 ) -> ConsorcioModel:
-    db_cons = ConsorcioModel(**consorcio.dict(), owner_id=owner_id)
+    db_cons = ConsorcioModel(**consorcio.dict(), owner_email=owner_email)
     db.add(db_cons)
     db.commit()
     db.refresh(db_cons)
@@ -50,12 +49,11 @@ def update_consorcio(
     db: Session,
     consorcio_id: int,
     consorcio_upd: ConsorcioUpdate,
-    owner_id: int
+    owner_email: str
 ) -> ConsorcioModel | None:
-    db_cons = get_consorcio(db, consorcio_id, owner_id)
+    db_cons = get_consorcio(db, consorcio_id, owner_email)
     if not db_cons:
         return None
-
     for key, value in consorcio_upd.dict(exclude_unset=True).items():
         setattr(db_cons, key, value)
     db.commit()
@@ -65,25 +63,24 @@ def update_consorcio(
 def delete_consorcio(
     db: Session,
     consorcio_id: int,
-    owner_id: int
+    owner_email: str
 ) -> ConsorcioModel | None:
-    db_cons = get_consorcio(db, consorcio_id, owner_id)
+    db_cons = get_consorcio(db, consorcio_id, owner_email)
     if not db_cons:
         return None
-
     db.delete(db_cons)
     db.commit()
     return db_cons
 
 def get_consorcios_by_dia_pg(
     db: Session,
-    owner_id: int,
+    owner_email: str,
     dia_pg: str
 ) -> List[ConsorcioModel]:
     return (
         db.query(ConsorcioModel)
           .filter(
-              ConsorcioModel.owner_id == owner_id,
+              ConsorcioModel.owner_email == owner_email,
               ConsorcioModel.dia_pg == dia_pg
           )
           .all()
@@ -91,13 +88,13 @@ def get_consorcios_by_dia_pg(
 
 def get_consorcios_by_proposta(
     db: Session,
-    owner_id: int,
+    owner_email: str,
     proposta: str
 ) -> List[ConsorcioModel]:
     return (
         db.query(ConsorcioModel)
           .filter(
-              ConsorcioModel.owner_id == owner_id,
+              ConsorcioModel.owner_email == owner_email,
               ConsorcioModel.proposta == proposta
           )
           .all()

@@ -1,5 +1,3 @@
-# app/crud/tarefas.py
-
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import date
@@ -9,13 +7,13 @@ from app.schemas.tarefas import TarefasCreate, TarefasUpdate
 
 def get_tarefas(
     db: Session,
-    dono: str,
+    owner_email: str,
     skip: int = 0,
     limit: int = 100
 ) -> List[TarefasModel]:
     return (
         db.query(TarefasModel)
-          .filter(TarefasModel.dono == dono)
+          .filter(TarefasModel.owner_email == owner_email)
           .offset(skip)
           .limit(limit)
           .all()
@@ -24,13 +22,13 @@ def get_tarefas(
 def get_tarefa(
     db: Session,
     tarefa_id: int,
-    dono: str
+    owner_email: str
 ) -> TarefasModel | None:
     return (
         db.query(TarefasModel)
           .filter(
               TarefasModel.id == tarefa_id,
-              TarefasModel.dono == dono
+              TarefasModel.owner_email == owner_email
           )
           .first()
     )
@@ -38,9 +36,9 @@ def get_tarefa(
 def create_tarefa(
     db: Session,
     tarefa: TarefasCreate,
-    dono: str
+    owner_email: str
 ) -> TarefasModel:
-    db_tarefa = TarefasModel(**tarefa.dict(), dono=dono)
+    db_tarefa = TarefasModel(**tarefa.dict(), owner_email=owner_email)
     db.add(db_tarefa)
     db.commit()
     db.refresh(db_tarefa)
@@ -50,9 +48,9 @@ def update_tarefa(
     db: Session,
     tarefa_id: int,
     tarefa_upd: TarefasUpdate,
-    dono: str
+    owner_email: str
 ) -> TarefasModel | None:
-    db_tarefa = get_tarefa(db, tarefa_id, dono)
+    db_tarefa = get_tarefa(db, tarefa_id, owner_email)
     if not db_tarefa:
         return None
 
@@ -65,9 +63,9 @@ def update_tarefa(
 def delete_tarefa(
     db: Session,
     tarefa_id: int,
-    dono: str
+    owner_email: str
 ) -> TarefasModel | None:
-    db_tarefa = get_tarefa(db, tarefa_id, dono)
+    db_tarefa = get_tarefa(db, tarefa_id, owner_email)
     if not db_tarefa:
         return None
 
@@ -77,13 +75,13 @@ def delete_tarefa(
 
 def get_tarefas_by_dt_venc(
     db: Session,
-    dono: str,
+    owner_email: str,
     dt_venc: date
 ) -> List[TarefasModel]:
     return (
         db.query(TarefasModel)
           .filter(
-              TarefasModel.dono == dono,
+              TarefasModel.owner_email == owner_email,
               TarefasModel.dt_venc == dt_venc
           )
           .all()

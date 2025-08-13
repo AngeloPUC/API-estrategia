@@ -1,21 +1,18 @@
-# app/crud/tdv.py
-
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import date
 
 from app.models.tdv import Tdv as TdvModel
 from app.schemas.tdv import TdvCreate, TdvUpdate
 
 def get_tdvs(
     db: Session,
-    dono: str,
+    owner_email: str,
     skip: int = 0,
     limit: int = 100
 ) -> List[TdvModel]:
     return (
         db.query(TdvModel)
-          .filter(TdvModel.dono == dono)
+          .filter(TdvModel.owner_email == owner_email)
           .offset(skip)
           .limit(limit)
           .all()
@@ -24,13 +21,13 @@ def get_tdvs(
 def get_tdv(
     db: Session,
     tdv_id: int,
-    dono: str
+    owner_email: str
 ) -> TdvModel | None:
     return (
         db.query(TdvModel)
           .filter(
               TdvModel.id == tdv_id,
-              TdvModel.dono == dono
+              TdvModel.owner_email == owner_email
           )
           .first()
     )
@@ -38,9 +35,9 @@ def get_tdv(
 def create_tdv(
     db: Session,
     tdv: TdvCreate,
-    dono: str
+    owner_email: str
 ) -> TdvModel:
-    db_tdv = TdvModel(**tdv.dict(), dono=dono)
+    db_tdv = TdvModel(**tdv.dict(), owner_email=owner_email)
     db.add(db_tdv)
     db.commit()
     db.refresh(db_tdv)
@@ -50,9 +47,9 @@ def update_tdv(
     db: Session,
     tdv_id: int,
     tdv_upd: TdvUpdate,
-    dono: str
+    owner_email: str
 ) -> TdvModel | None:
-    db_tdv = get_tdv(db, tdv_id, dono)
+    db_tdv = get_tdv(db, tdv_id, owner_email)
     if not db_tdv:
         return None
 
@@ -65,9 +62,9 @@ def update_tdv(
 def delete_tdv(
     db: Session,
     tdv_id: int,
-    dono: str
+    owner_email: str
 ) -> TdvModel | None:
-    db_tdv = get_tdv(db, tdv_id, dono)
+    db_tdv = get_tdv(db, tdv_id, owner_email)
     if not db_tdv:
         return None
 
@@ -77,13 +74,13 @@ def delete_tdv(
 
 def get_tdvs_by_dia_venc(
     db: Session,
-    dono: str,
+    owner_email: str,
     dia_venc: str
 ) -> List[TdvModel]:
     return (
         db.query(TdvModel)
           .filter(
-              TdvModel.dono == dono,
+              TdvModel.owner_email == owner_email,
               TdvModel.dia_venc == dia_venc
           )
           .all()
@@ -91,13 +88,13 @@ def get_tdvs_by_dia_venc(
 
 def get_tdvs_by_proposta(
     db: Session,
-    dono: str,
+    owner_email: str,
     proposta: str
 ) -> List[TdvModel]:
     return (
         db.query(TdvModel)
           .filter(
-              TdvModel.dono == dono,
+              TdvModel.owner_email == owner_email,
               TdvModel.proposta == proposta
           )
           .all()

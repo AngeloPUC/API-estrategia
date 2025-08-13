@@ -1,5 +1,3 @@
-# app/routers/tarefas.py
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
@@ -20,10 +18,11 @@ def create_tarefa(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.tarefas.create_tarefa(
         db,
         tarefa,
-        dono=current_user["email"]
+        owner_email=owner_email
     )
 
 @router.get("/", response_model=List[schemas.tarefas.Tarefas])
@@ -33,9 +32,10 @@ def read_tarefas(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.tarefas.get_tarefas(
         db,
-        dono=current_user["email"],
+        owner_email=owner_email,
         skip=skip,
         limit=limit
     )
@@ -46,10 +46,11 @@ def read_tarefa(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     db_tarefa = crud.tarefas.get_tarefa(
         db,
         tarefa_id,
-        dono=current_user["email"]
+        owner_email=owner_email
     )
     if not db_tarefa:
         raise HTTPException(status_code=404, detail="Tarefa não encontrada")
@@ -62,11 +63,12 @@ def update_tarefa(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     updated = crud.tarefas.update_tarefa(
         db,
         tarefa_id,
         tarefa,
-        dono=current_user["email"]
+        owner_email=owner_email
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Tarefa não encontrada")
@@ -78,10 +80,11 @@ def delete_tarefa(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     deleted = crud.tarefas.delete_tarefa(
         db,
         tarefa_id,
-        dono=current_user["email"]
+        owner_email=owner_email
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="Tarefa não encontrada")
@@ -93,8 +96,9 @@ def search_tarefas(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.tarefas.get_tarefas_by_dt_venc(
         db,
-        dono=current_user["email"],
+        owner_email=owner_email,
         dt_venc=dt_venc
     )

@@ -19,10 +19,11 @@ def create_consorcio(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.consorcio.create_consorcio(
         db,
         consorcio,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
 
 @router.get("/", response_model=List[schemas.consorcio.Consorcio])
@@ -32,9 +33,10 @@ def read_consorcios(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.consorcio.get_consorcios(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         skip=skip,
         limit=limit
     )
@@ -45,10 +47,11 @@ def read_consorcio(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     db_cons = crud.consorcio.get_consorcio(
         db,
         consorcio_id,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not db_cons:
         raise HTTPException(status_code=404, detail="Consórcio não encontrado")
@@ -61,11 +64,12 @@ def update_consorcio(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     updated = crud.consorcio.update_consorcio(
         db,
         consorcio_id,
         consorcio,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Consórcio não encontrado")
@@ -77,10 +81,11 @@ def delete_consorcio(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     deleted = crud.consorcio.delete_consorcio(
         db,
         consorcio_id,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="Consórcio não encontrado")
@@ -92,9 +97,10 @@ def search_by_dia_pg(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.consorcio.get_consorcios_by_dia_pg(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         dia_pg=dia_pg
     )
 
@@ -104,8 +110,9 @@ def search_by_proposta(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.consorcio.get_consorcios_by_proposta(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         proposta=proposta
     )

@@ -1,5 +1,3 @@
-# app/schemas/acoes.py
-
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
@@ -23,7 +21,7 @@ class AcoesUpdate(BaseModel):
 
 class Acoes(AcoesBase):
     id: int
-    owner_id: int
+    owner_email: str
 
     class Config:
         from_attributes = True

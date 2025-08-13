@@ -1,5 +1,3 @@
-# app/routers/equipe.py
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
@@ -20,10 +18,11 @@ def create_equipe(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.equipe.create_equipe(
         db,
         equipe,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
 
 @router.get("/", response_model=List[schemas.equipe.Equipe])
@@ -33,9 +32,10 @@ def read_equipes(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.equipe.get_equipes(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         skip=skip,
         limit=limit
     )
@@ -46,10 +46,11 @@ def read_equipe(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     db_equipe = crud.equipe.get_equipe(
         db,
         equipe_id,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not db_equipe:
         raise HTTPException(status_code=404, detail="Equipe não encontrada")
@@ -62,11 +63,12 @@ def update_equipe(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     updated = crud.equipe.update_equipe(
         db,
         equipe_id,
         equipe,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Equipe não encontrada")
@@ -78,10 +80,11 @@ def delete_equipe(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     deleted = crud.equipe.delete_equipe(
         db,
         equipe_id,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="Equipe não encontrada")
@@ -94,9 +97,10 @@ def search_equipes(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.equipe.get_equipes_by_funcao_and_dt_niver(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         funcao=funcao,
         dt_niver=dt_niver
     )

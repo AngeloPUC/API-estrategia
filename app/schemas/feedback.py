@@ -1,5 +1,3 @@
-# app/schemas/feedback.py
-
 from pydantic import BaseModel
 from typing import Optional
 
@@ -24,7 +22,7 @@ class FeedbackUpdate(BaseModel):
 
 class Feedback(FeedbackBase):
     id: int
-    owner_id: int
+    owner_email: str
 
     class Config:
         from_attributes = True

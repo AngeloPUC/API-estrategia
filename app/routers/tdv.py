@@ -1,5 +1,3 @@
-# app/routers/tdv.py
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
@@ -19,10 +17,11 @@ def create_tdv(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.tdv.create_tdv(
         db,
         tdv,
-        dono=current_user["email"],
+        owner_email=owner_email,
     )
 
 @router.get("/", response_model=List[schemas.tdv.Tdv])
@@ -32,9 +31,10 @@ def read_tdvs(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.tdv.get_tdvs(
         db,
-        dono=current_user["email"],
+        owner_email=owner_email,
         skip=skip,
         limit=limit,
     )
@@ -45,10 +45,11 @@ def read_tdv(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     db_tdv = crud.tdv.get_tdv(
         db,
         tdv_id,
-        dono=current_user["email"],
+        owner_email=owner_email,
     )
     if not db_tdv:
         raise HTTPException(status_code=404, detail="TDV não encontrada")
@@ -61,11 +62,12 @@ def update_tdv(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     updated = crud.tdv.update_tdv(
         db,
         tdv_id,
         tdv,
-        dono=current_user["email"],
+        owner_email=owner_email,
     )
     if not updated:
         raise HTTPException(status_code=404, detail="TDV não encontrada")
@@ -77,10 +79,11 @@ def delete_tdv(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     deleted = crud.tdv.delete_tdv(
         db,
         tdv_id,
-        dono=current_user["email"],
+        owner_email=owner_email,
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="TDV não encontrada")
@@ -92,9 +95,10 @@ def search_by_dia_venc(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.tdv.get_tdvs_by_dia_venc(
         db,
-        dono=current_user["email"],
+        owner_email=owner_email,
         dia_venc=dia_venc,
     )
 
@@ -104,8 +108,9 @@ def search_by_proposta(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.tdv.get_tdvs_by_proposta(
         db,
-        dono=current_user["email"],
+        owner_email=owner_email,
         proposta=proposta,
     )

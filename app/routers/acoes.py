@@ -1,5 +1,3 @@
-# app/routers/acoes.py
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
@@ -20,10 +18,11 @@ def create_acao(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.acoes.create_acao(
         db,
         acao,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
 
 @router.get("/", response_model=List[schemas.acoes.Acoes])
@@ -33,9 +32,10 @@ def read_acoes(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.acoes.get_acoes(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         skip=skip,
         limit=limit
     )
@@ -46,10 +46,11 @@ def read_acao(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     db_acao = crud.acoes.get_acao(
         db,
         acao_id,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not db_acao:
         raise HTTPException(status_code=404, detail="Ação não encontrada")
@@ -62,11 +63,12 @@ def update_acao(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     updated = crud.acoes.update_acao(
         db,
         acao_id,
         acao,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Ação não encontrada")
@@ -78,10 +80,11 @@ def delete_acao(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     deleted = crud.acoes.delete_acao(
         db,
         acao_id,
-        owner_id=current_user["id"]
+        owner_email=owner_email
     )
     if not deleted:
         raise HTTPException(status_code=404, detail="Ação não encontrada")
@@ -94,9 +97,10 @@ def search_acoes(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    owner_email = current_user["email"]
     return crud.acoes.get_acoes_by_quem_id_and_dt_venc(
         db,
-        owner_id=current_user["id"],
+        owner_email=owner_email,
         quem_id=quem_id,
         dt_venc=dt_venc
     )
