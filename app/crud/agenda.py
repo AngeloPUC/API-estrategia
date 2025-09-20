@@ -1,4 +1,3 @@
-# app/crud/agenda.py
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from datetime import date
@@ -36,7 +35,9 @@ def create_agenda(
     agenda: AgendaCreate,
     owner_email: str,
 ) -> AgendaModel:
-    db_row = AgendaModel(**agenda.dict(), dono=owner_email)
+    # agenda is a pydantic model including titulo, data (date or None), hora (str) and obs
+    payload = agenda.dict(exclude_unset=True)
+    db_row = AgendaModel(**payload, dono=owner_email)
     db.add(db_row)
     db.commit()
     db.refresh(db_row)

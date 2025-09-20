@@ -1,5 +1,5 @@
 # app/routers/agenda.py
-from datetime import date
+from datetime import date, datetime, time as time_cls
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -14,6 +14,34 @@ router = APIRouter(
     tags=["agenda"],
 )
 
+def _compose_datetime(data_field, hora_field):
+    """
+    Recebe data_field (date | str | None) e hora_field (str | None).
+    Retorna datetime ou None.
+    """
+    if not data_field:
+        return None
+    # data_field pode ser objeto date ou string 'YYYY-MM-DD'
+    if isinstance(data_field, str):
+        data_str = data_field
+    else:
+        # date -> ISO date
+        data_str = data_field.isoformat()
+    if hora_field:
+        # hora esperada no formato 'HH:MM'
+        try:
+            # cria datetime local (assume hora local)
+            dt = datetime.fromisoformat(f"{data_str}T{hora_field}")
+            return dt
+        except Exception:
+            # fallback: tentar parse manual
+            parts = hora_field.split(':')
+            h = int(parts[0]) if parts and parts[0].isdigit() else 0
+            m = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+            return datetime.fromisoformat(f"{data_str}T00:00").replace(hour=h, minute=m)
+    # sem hora: usar meia-noite do dia
+    return datetime.fromisoformat(f"{data_str}T00:00:00")
+
 @router.post("/", response_model=schemas.agenda.Agenda)
 def create_agenda(
     agenda: schemas.agenda.AgendaCreate,
@@ -21,7 +49,19 @@ def create_agenda(
     current_user: dict = Depends(get_current_user),
 ):
     owner_email = current_user["email"]
-    return crud.agenda.create_agenda(db, agenda, owner_email=owner_email)
+
+    # preparar payload: converte data+hora para datetime se fornecidos
+    payload = agenda.dict(exclude_unset=True)
+    # extrair campos possivelmente presentes
+    data_field = payload.get("data")
+    hora_field = payload.get("hora")
+    if data_field is not None:
+        try:
+            payload["data"] = _compose_datetime(data_field, hora_field)
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Formato de data/hora inválido: {e}")
+
+    return crud.agenda.create_agenda(db, schemas.agenda.AgendaCreate(**payload), owner_email=owner_email)
 
 @router.get("/", response_model=List[schemas.agenda.Agenda])
 def read_agendas(
@@ -53,7 +93,17 @@ def update_agenda(
     current_user: dict = Depends(get_current_user),
 ):
     owner_email = current_user["email"]
-    updated = crud.agenda.update_agenda(db, agenda_id, agenda, owner_email=owner_email)
+
+    payload = agenda.dict(exclude_unset=True)
+    data_field = payload.get("data")
+    hora_field = payload.get("hora")
+    if data_field is not None:
+        try:
+            payload["data"] = _compose_datetime(data_field, hora_field)
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Formato de data/hora inválido: {e}")
+
+    updated = crud.agenda.update_agenda(db, agenda_id, schemas.agenda.AgendaUpdate(**payload), owner_email=owner_email)
     if not updated:
         raise HTTPException(status_code=404, detail="Registro da agenda não encontrado")
     return updated
