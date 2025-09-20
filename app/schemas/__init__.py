@@ -1,6 +1,10 @@
 # app/schemas/__init__.py
 
-# Ações
+# módulos completos (expõe app.schemas.esteira e app.schemas.agenda)
+from . import esteira
+from . import agenda
+
+# Ações (exporta as classes individuais)
 from .acoes import AcoesBase, AcoesCreate, AcoesUpdate, Acoes
 
 # Consórcio
@@ -19,6 +23,9 @@ from .tarefas import TarefasBase, TarefasCreate, TarefasUpdate, Tarefas
 from .tdv import TdvBase, TdvCreate, TdvUpdate, Tdv
 
 __all__ = [
+    # módulos
+    "esteira", "agenda",
+    # classes individuais
     "AcoesBase", "AcoesCreate", "AcoesUpdate", "Acoes",
     "ConsorcioBase", "ConsorcioCreate", "ConsorcioUpdate", "Consorcio",
     "EquipeBase", "EquipeCreate", "EquipeUpdate", "Equipe",

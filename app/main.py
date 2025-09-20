@@ -7,7 +7,11 @@ from fastapi.openapi.utils import get_openapi
 from app.database import engine, Base
 from app.config import settings
 from app.auth.security import get_current_user
-from app.routers import acoes, consorcio, equipe, tarefas, tdv, feedback
+from app.routers import acoes, consorcio, equipe, tarefas, tdv, feedback, esteira, agenda
+
+# importa models para garantir registro no metadata antes de create_all
+# certifique-se que app/models/__init__.py importe todos os modelos (esteira, agenda, etc.)
+from app import models
 
 # cria tabelas em dev
 Base.metadata.create_all(bind=engine)
@@ -33,6 +37,8 @@ app.include_router(equipe.router, dependencies=common_deps)
 app.include_router(tarefas.router, dependencies=common_deps)
 app.include_router(tdv.router, dependencies=common_deps)
 app.include_router(feedback.router, dependencies=common_deps)
+app.include_router(esteira.router, dependencies=common_deps)
+app.include_router(agenda.router, dependencies=common_deps)
 
 @app.get("/", tags=["Root"])
 async def root():
