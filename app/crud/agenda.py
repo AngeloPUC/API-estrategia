@@ -5,6 +5,7 @@ from datetime import date
 from app.models.agenda import Agenda as AgendaModel
 from app.schemas.agenda import AgendaCreate, AgendaUpdate
 
+
 def get_agendas(
     db: Session,
     owner_email: str,
@@ -19,6 +20,7 @@ def get_agendas(
           .all()
     )
 
+
 def get_agenda(
     db: Session,
     agenda_id: int,
@@ -30,18 +32,20 @@ def get_agenda(
           .first()
     )
 
+
 def create_agenda(
     db: Session,
     agenda: AgendaCreate,
     owner_email: str,
 ) -> AgendaModel:
-    # agenda is a pydantic model including titulo, data (date or None), hora (str) and obs
+    # agenda é um pydantic model; já normalizamos types no router
     payload = agenda.dict(exclude_unset=True)
     db_row = AgendaModel(**payload, dono=owner_email)
     db.add(db_row)
     db.commit()
     db.refresh(db_row)
     return db_row
+
 
 def update_agenda(
     db: Session,
@@ -58,6 +62,7 @@ def update_agenda(
     db.refresh(db_row)
     return db_row
 
+
 def delete_agenda(
     db: Session,
     agenda_id: int,
@@ -69,6 +74,7 @@ def delete_agenda(
     db.delete(db_row)
     db.commit()
     return db_row
+
 
 def get_agendas_by_date(
     db: Session,

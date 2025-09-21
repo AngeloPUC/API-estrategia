@@ -1,6 +1,5 @@
-# app/routers/agenda.py
-from datetime import date, datetime, time as time_cls
-from typing import List
+from datetime import date, datetime
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
@@ -14,33 +13,37 @@ router = APIRouter(
     tags=["agenda"],
 )
 
-def _compose_datetime(data_field, hora_field):
+
+def _validate_date_str(d: str) -> date:
     """
-    Recebe data_field (date | str | None) e hora_field (str | None).
-    Retorna datetime ou None.
+    Valida string 'YYYY-MM-DD' e retorna objeto date.
+    Lança ValueError se inválido.
     """
-    if not data_field:
-        return None
-    # data_field pode ser objeto date ou string 'YYYY-MM-DD'
-    if isinstance(data_field, str):
-        data_str = data_field
-    else:
-        # date -> ISO date
-        data_str = data_field.isoformat()
-    if hora_field:
-        # hora esperada no formato 'HH:MM'
-        try:
-            # cria datetime local (assume hora local)
-            dt = datetime.fromisoformat(f"{data_str}T{hora_field}")
-            return dt
-        except Exception:
-            # fallback: tentar parse manual
-            parts = hora_field.split(':')
-            h = int(parts[0]) if parts and parts[0].isdigit() else 0
-            m = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
-            return datetime.fromisoformat(f"{data_str}T00:00").replace(hour=h, minute=m)
-    # sem hora: usar meia-noite do dia
-    return datetime.fromisoformat(f"{data_str}T00:00:00")
+    try:
+        return date.fromisoformat(d)
+    except Exception as e:
+        raise ValueError(f"data inválida: {e}")
+
+
+def _validate_time_str(t: str) -> str:
+    """
+    Garante que t é 'HH:MM' e retorna no formato zero-padded.
+    Lança ValueError se inválido.
+    """
+    if t is None or t == "":
+        raise ValueError("hora vazia")
+    parts = str(t).split(":")
+    if len(parts) == 0:
+        raise ValueError("formato de hora inválido")
+    try:
+        h = int(parts[0])
+        m = int(parts[1]) if len(parts) > 1 else 0
+    except Exception:
+        raise ValueError("hora contém partes não numéricas")
+    if not (0 <= h <= 23 and 0 <= m <= 59):
+        raise ValueError("hora fora do intervalo 00:00-23:59")
+    return f"{str(h).zfill(2)}:{str(m).zfill(2)}"
+
 
 @router.post("/", response_model=schemas.agenda.Agenda)
 def create_agenda(
@@ -48,20 +51,47 @@ def create_agenda(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Create agenda:
+    - Normaliza data para objeto date (se fornecida)
+    - Normaliza hora para string 'HH:MM' (se fornecida)
+    - Não converte para datetime; mantém tipos compatíveis com schema e modelo
+    """
     owner_email = current_user["email"]
-
-    # preparar payload: converte data+hora para datetime se fornecidos
     payload = agenda.dict(exclude_unset=True)
-    # extrair campos possivelmente presentes
-    data_field = payload.get("data")
-    hora_field = payload.get("hora")
-    if data_field is not None:
-        try:
-            payload["data"] = _compose_datetime(data_field, hora_field)
-        except Exception as e:
-            raise HTTPException(status_code=422, detail=f"Formato de data/hora inválido: {e}")
 
-    return crud.agenda.create_agenda(db, schemas.agenda.AgendaCreate(**payload), owner_email=owner_email)
+    # Normaliza data -> date
+    data_field = payload.get("data")
+    if data_field is not None and data_field != "":
+        if isinstance(data_field, (date, datetime)):
+            payload["data"] = data_field if isinstance(data_field, date) else data_field.date()
+        else:
+            try:
+                payload["data"] = _validate_date_str(str(data_field))
+            except Exception as e:
+                raise HTTPException(status_code=422, detail=f"Formato de data inválido: {e}")
+
+    # Normaliza hora -> 'HH:MM' ou remove
+    hora_field = payload.get("hora")
+    if hora_field is not None and hora_field != "":
+        try:
+            payload["hora"] = _validate_time_str(str(hora_field))
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Formato de hora inválido: {e}")
+    else:
+        payload.pop("hora", None)
+
+    try:
+        created = crud.agenda.create_agenda(db, schemas.agenda.AgendaCreate(**payload), owner_email=owner_email)
+        return created
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print("ERROR create_agenda:", e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Erro interno ao criar agenda")
+
 
 @router.get("/", response_model=List[schemas.agenda.Agenda])
 def read_agendas(
@@ -72,6 +102,7 @@ def read_agendas(
 ):
     owner_email = current_user["email"]
     return crud.agenda.get_agendas(db, owner_email=owner_email, skip=skip, limit=limit)
+
 
 @router.get("/{agenda_id}", response_model=schemas.agenda.Agenda)
 def read_agenda(
@@ -85,6 +116,7 @@ def read_agenda(
         raise HTTPException(status_code=404, detail="Registro da agenda não encontrado")
     return db_row
 
+
 @router.put("/{agenda_id}", response_model=schemas.agenda.Agenda)
 def update_agenda(
     agenda_id: int,
@@ -92,21 +124,50 @@ def update_agenda(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Atualiza um agendamento. Normalização igual ao create.
+    """
     owner_email = current_user["email"]
-
     payload = agenda.dict(exclude_unset=True)
-    data_field = payload.get("data")
-    hora_field = payload.get("hora")
-    if data_field is not None:
-        try:
-            payload["data"] = _compose_datetime(data_field, hora_field)
-        except Exception as e:
-            raise HTTPException(status_code=422, detail=f"Formato de data/hora inválido: {e}")
 
-    updated = crud.agenda.update_agenda(db, agenda_id, schemas.agenda.AgendaUpdate(**payload), owner_email=owner_email)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Registro da agenda não encontrado")
-    return updated
+    # Normaliza data
+    data_field = payload.get("data")
+    if data_field is not None and data_field != "":
+        if isinstance(data_field, (date, datetime)):
+            payload["data"] = data_field if isinstance(data_field, date) else data_field.date()
+        else:
+            try:
+                payload["data"] = _validate_date_str(str(data_field))
+            except Exception as e:
+                raise HTTPException(status_code=422, detail=f"Formato de data inválido: {e}")
+    else:
+        if "data" in payload and payload["data"] in (None, ""):
+            payload.pop("data", None)
+
+    # Normaliza hora
+    hora_field = payload.get("hora")
+    if hora_field is not None and hora_field != "":
+        try:
+            payload["hora"] = _validate_time_str(str(hora_field))
+        except Exception as e:
+            raise HTTPException(status_code=422, detail=f"Formato de hora inválido: {e}")
+    else:
+        if "hora" in payload and payload["hora"] in (None, ""):
+            payload.pop("hora", None)
+
+    try:
+        updated = crud.agenda.update_agenda(db, agenda_id, schemas.agenda.AgendaUpdate(**payload), owner_email=owner_email)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Registro da agenda não encontrado")
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print("ERROR update_agenda:", e)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Erro interno ao atualizar agenda")
+
 
 @router.delete("/{agenda_id}", response_model=schemas.agenda.Agenda)
 def delete_agenda(
@@ -119,6 +180,7 @@ def delete_agenda(
     if not deleted:
         raise HTTPException(status_code=404, detail="Registro da agenda não encontrado")
     return deleted
+
 
 @router.get("/search/data/", response_model=List[schemas.agenda.Agenda])
 def search_by_data(
